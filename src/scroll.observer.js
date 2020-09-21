@@ -19,10 +19,10 @@ export class ScrollObserver {
      @threshold (array): array of thresholds that will trigger the callback function, default to 0
      ***/
     constructor({
-        root,
-        rootMargin = "0px",
-        threshold = 0
-    }) {
+                    root,
+                    rootMargin = "0px",
+                    threshold = 0
+                }) {
         if(!!window.IntersectionObserver) {
 
             this.root = document.querySelector(root);
@@ -61,38 +61,40 @@ export class ScrollObserver {
             // find our entry in our cache elements array
             const cachedEl = this.els.find(data => data.el === entry.target);
 
-            // if intersection ratio is bigger than the triggerRatio property
-            if(entry.intersectionRatio > cachedEl.triggerRatio) {
-                // if we should always trigger it or if visibility hasn't been triggered yet
-                if(cachedEl.alwaysTrigger || !cachedEl.inView) {
-                    // apply staggering
-                    setTimeout(() => {
-                        cachedEl.onElVisible && cachedEl.onElVisible(cachedEl);
-                        this._onElVisibleCallback(cachedEl);
-                    }, index * cachedEl.stagger);
+            if(cachedEl) {
+                // if intersection ratio is bigger than the triggerRatio property
+                if(entry.intersectionRatio > cachedEl.triggerRatio) {
+                    // if we should always trigger it or if visibility hasn't been triggered yet
+                    if(cachedEl.alwaysTrigger || !cachedEl.inView) {
+                        // apply staggering
+                        setTimeout(() => {
+                            cachedEl.onElVisible && cachedEl.onElVisible(cachedEl);
+                            this._onElVisibleCallback && this._onElVisibleCallback(cachedEl);
+                        }, index * cachedEl.stagger);
+                    }
+
+                    // element is now in view
+                    cachedEl.inView = true;
+                }
+                else if(cachedEl.inView && entry.intersectionRatio <= cachedEl.triggerRatio) {
+                    // if intersection ratio is smaller than our trigger ratio and our element is visible
+
+                    // element is no more visible
+                    cachedEl.inView = false;
+                    cachedEl.onElHidden && cachedEl.onElHidden(cachedEl);
+                    this._onElHiddenCallback && this._onElHiddenCallback(cachedEl);
+
+                    // if we should observe it just once, unobserve it now
+                    if(!cachedEl.keepObserving) {
+                        this._unobserve(cachedEl);
+                    }
                 }
 
-                // element is now in view
-                cachedEl.inView = true;
+                // update its ratio property
+                cachedEl.ratio = entry.intersectionRatio;
+                // update its boundingClientRect object
+                cachedEl.boundingClientRect = entry.boundingClientRect;
             }
-            else if(cachedEl.inView && entry.intersectionRatio <= cachedEl.triggerRatio) {
-                // if intersection ratio is smaller than our trigger ratio and our element is visible
-
-                // element is no more visible
-                cachedEl.inView = false;
-                cachedEl.onElHidden && cachedEl.onElHidden(cachedEl);
-                this._onElHiddenCallback(cachedEl);
-
-                // if we should observe it just once, unobserve it now
-                if(!cachedEl.keepObserving) {
-                    this._unobserve(cachedEl);
-                }
-            }
-
-            // update its ratio property
-            cachedEl.ratio = entry.intersectionRatio;
-            // update its boundingClientRect object
-            cachedEl.boundingClientRect = entry.boundingClientRect;
         });
     }
 
@@ -109,16 +111,16 @@ export class ScrollObserver {
      @stagger (int): number of milliseconds to wait before calling the visible callback (used for staggering animations), default to 0
      ***/
     observe({
-        elements = [],
-        selector,
-        keepObserving = false,
-        triggerRatio = 0,
-        alwaysTrigger = true,
+                elements = [],
+                selector,
+                keepObserving = false,
+                triggerRatio = 0,
+                alwaysTrigger = true,
 
-        stagger = 0,
-        onElVisible = () => {},
-        onElHidden = () => {},
-    }) {
+                stagger = 0,
+                onElVisible = () => {},
+                onElHidden = () => {},
+            }) {
         const els = elements.length ? elements : document.querySelectorAll(selector);
 
         // add elements to our els array and start observing them

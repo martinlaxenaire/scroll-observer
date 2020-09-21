@@ -76,40 +76,39 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
           // find our entry in our cache elements array
           var cachedEl = _this2.els.find(function (data) {
             return data.el === entry.target;
-          }); // if intersection ratio is bigger than the triggerRatio property
+          });
+
+          if (cachedEl) {
+            // if intersection ratio is bigger than the triggerRatio property
+            if (entry.intersectionRatio > cachedEl.triggerRatio) {
+              // if we should always trigger it or if visibility hasn't been triggered yet
+              if (cachedEl.alwaysTrigger || !cachedEl.inView) {
+                // apply staggering
+                setTimeout(function () {
+                  cachedEl.onElVisible && cachedEl.onElVisible(cachedEl);
+                  _this2._onElVisibleCallback && _this2._onElVisibleCallback(cachedEl);
+                }, index * cachedEl.stagger);
+              } // element is now in view
 
 
-          if (entry.intersectionRatio > cachedEl.triggerRatio) {
-            // if we should always trigger it or if visibility hasn't been triggered yet
-            if (cachedEl.alwaysTrigger || !cachedEl.inView) {
-              // apply staggering
-              setTimeout(function () {
-                cachedEl.onElVisible && cachedEl.onElVisible(cachedEl);
+              cachedEl.inView = true;
+            } else if (cachedEl.inView && entry.intersectionRatio <= cachedEl.triggerRatio) {
+              // if intersection ratio is smaller than our trigger ratio and our element is visible
+              // element is no more visible
+              cachedEl.inView = false;
+              cachedEl.onElHidden && cachedEl.onElHidden(cachedEl);
+              _this2._onElHiddenCallback && _this2._onElHiddenCallback(cachedEl); // if we should observe it just once, unobserve it now
 
-                _this2._onElVisibleCallback(cachedEl);
-              }, index * cachedEl.stagger);
-            } // element is now in view
-
-
-            cachedEl.inView = true;
-          } else if (cachedEl.inView && entry.intersectionRatio <= cachedEl.triggerRatio) {
-            // if intersection ratio is smaller than our trigger ratio and our element is visible
-            // element is no more visible
-            cachedEl.inView = false;
-            cachedEl.onElHidden && cachedEl.onElHidden(cachedEl);
-
-            _this2._onElHiddenCallback(cachedEl); // if we should observe it just once, unobserve it now
+              if (!cachedEl.keepObserving) {
+                _this2._unobserve(cachedEl);
+              }
+            } // update its ratio property
 
 
-            if (!cachedEl.keepObserving) {
-              _this2._unobserve(cachedEl);
-            }
-          } // update its ratio property
+            cachedEl.ratio = entry.intersectionRatio; // update its boundingClientRect object
 
-
-          cachedEl.ratio = entry.intersectionRatio; // update its boundingClientRect object
-
-          cachedEl.boundingClientRect = entry.boundingClientRect;
+            cachedEl.boundingClientRect = entry.boundingClientRect;
+          }
         });
       }
       /***
@@ -208,7 +207,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
       /***
        Unobserve a cached element by specifying its HTML element property
          params:
-       @htmlElement (HTML element): a HTML element to stop watching
+       @htmlElements (HTML elements): an array of HTML elements to stop watching
        ***/
 
     }, {
