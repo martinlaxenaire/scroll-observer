@@ -8,7 +8,7 @@ import {ScrollObserver} from './src/scroll.observer.js';
 const scrollObserver = new ScrollObserver();
 ```
 
-In a browser, you can use the UMD files located in the `dist` directory. You will have to use the `ScrollObserver` namespace:
+In a browser, you can use the UMD files located in the `dist` directory:
     
 ```html
 <script src="dist/scroll.observer.umd.js"></script>
@@ -16,7 +16,7 @@ In a browser, you can use the UMD files located in the `dist` directory. You wil
 
 
 ```javascript
-const scrollObserver = new ScrollObserver.ScrollObserver();
+const scrollObserver = new ScrollObserver();
 ```
 
 <h3>Parameters</h3>

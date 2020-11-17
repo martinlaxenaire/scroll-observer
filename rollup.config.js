@@ -7,7 +7,8 @@ export default [{
         {
             file: 'dist/scroll.observer.umd.js',
             format: 'umd',
-            name: 'ScrollObserver',
+            name: 'window',
+            extend: true,
             plugins: [
                 getBabelOutputPlugin({
                     allowAllFormats: true,
@@ -21,7 +22,8 @@ export default [{
         {
             file: 'dist/scroll.observer.umd.min.js',
             format: 'umd',
-            name: 'ScrollObserver',
+            name: 'window',
+            extend: true,
             plugins: [
                 getBabelOutputPlugin({
                     allowAllFormats: true,
