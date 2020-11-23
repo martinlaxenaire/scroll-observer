@@ -75,7 +75,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
         entries.forEach(function (entry, index) {
           // find our entry in our cache elements array
           var cachedEl = _this2.els.find(function (data) {
-            return data.el === entry.target;
+            return data.el.isSameNode(entry.target);
           });
 
           if (cachedEl) {
@@ -183,7 +183,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
         this.observer.unobserve(element.el); // remove element from our els array
 
         this.els = this.els.filter(function (data) {
-          return data.el.isEqualNode(element.el);
+          return !data.el.isSameNode(element.el);
         });
       }
       /***
@@ -197,7 +197,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
       value: function unobserveEl(htmlElement) {
         // find our HTML element in our array els array and unobserve it
         var cachedEl = this.els.find(function (data) {
-          return data.el === htmlElement;
+          return data.el.isSameNode(htmlElement);
         });
 
         if (cachedEl) {

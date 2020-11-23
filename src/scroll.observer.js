@@ -59,7 +59,7 @@ export class ScrollObserver {
     _callback(entries) {
         entries.forEach((entry, index) => {
             // find our entry in our cache elements array
-            const cachedEl = this.els.find(data => data.el === entry.target);
+            const cachedEl = this.els.find(data => data.el.isSameNode(entry.target));
 
             if(cachedEl) {
                 // if intersection ratio is bigger than the triggerRatio property
@@ -163,7 +163,7 @@ export class ScrollObserver {
         this.observer.unobserve(element.el);
 
         // remove element from our els array
-        this.els = this.els.filter(data => data.el.isEqualNode(element.el));
+        this.els = this.els.filter(data => !data.el.isSameNode(element.el));
     }
 
 
@@ -175,7 +175,7 @@ export class ScrollObserver {
      ***/
     unobserveEl(htmlElement) {
         // find our HTML element in our array els array and unobserve it
-        const cachedEl = this.els.find(data => data.el === htmlElement);
+        const cachedEl = this.els.find(data => data.el.isSameNode(htmlElement));
         if(cachedEl) {
             this._unobserve(cachedEl);
         }
