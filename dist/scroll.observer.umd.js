@@ -14,7 +14,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
    Lightweight vanilla javascript library to handle intersection observers
    Inspired from past work & and Baptiste Briel work: http://awams.bbriel.me/
    Author: Martin Laxenaire https://www.martin-laxenaire.fr/
-   Version: 1.0.0
+   Version: 1.1.1
    ***/
 
   var ScrollObserver = /*#__PURE__*/function () {
@@ -72,6 +72,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
       value: function _callback(entries) {
         var _this2 = this;
 
+        var entriesShown = 0;
         entries.forEach(function (entry, index) {
           // find our entry in our cache elements array
           var cachedEl = _this2.els.find(function (data) {
@@ -87,7 +88,8 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
                 setTimeout(function () {
                   cachedEl.onElVisible && cachedEl.onElVisible(cachedEl);
                   _this2._onElVisibleCallback && _this2._onElVisibleCallback(cachedEl);
-                }, index * cachedEl.stagger);
+                }, entriesShown * cachedEl.stagger);
+                entriesShown++;
               } // element is now in view
 
 

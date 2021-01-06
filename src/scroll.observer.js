@@ -2,7 +2,7 @@
  Lightweight vanilla javascript library to handle intersection observers
  Inspired from past work & and Baptiste Briel work: http://awams.bbriel.me/
  Author: Martin Laxenaire https://www.martin-laxenaire.fr/
- Version: 1.0.0
+ Version: 1.1.1
  ***/
 
 'use strict';
@@ -19,10 +19,10 @@ export class ScrollObserver {
      @threshold (array): array of thresholds that will trigger the callback function, default to 0
      ***/
     constructor({
-                    root,
-                    rootMargin = "0px",
-                    threshold = 0
-                }) {
+        root,
+        rootMargin = "0px",
+        threshold = 0
+    }) {
         if(!!window.IntersectionObserver) {
 
             this.root = document.querySelector(root);
@@ -57,6 +57,7 @@ export class ScrollObserver {
      Can call callback functions based on element parameters
      ***/
     _callback(entries) {
+        let entriesShown = 0;
         entries.forEach((entry, index) => {
             // find our entry in our cache elements array
             const cachedEl = this.els.find(data => data.el.isSameNode(entry.target));
@@ -70,7 +71,9 @@ export class ScrollObserver {
                         setTimeout(() => {
                             cachedEl.onElVisible && cachedEl.onElVisible(cachedEl);
                             this._onElVisibleCallback && this._onElVisibleCallback(cachedEl);
-                        }, index * cachedEl.stagger);
+                        }, entriesShown * cachedEl.stagger);
+
+                        entriesShown++;
                     }
 
                     // element is now in view
