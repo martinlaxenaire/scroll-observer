@@ -14,7 +14,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
    Lightweight vanilla javascript library to handle intersection observers
    Inspired from past work & and Baptiste Briel work: http://awams.bbriel.me/
    Author: Martin Laxenaire https://www.martin-laxenaire.fr/
-   Version: 1.1.1
+   Version: 1.2.0
    ***/
 
   var ScrollObserver = /*#__PURE__*/function () {
@@ -48,6 +48,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
         this.threshold = threshold; // cache elements to observe
 
         this.els = [];
+        this._staggerEls = [];
         this.observer = new IntersectionObserver(this._callback.bind(this), {
           root: this.root === "viewport" ? null : this.root,
           rootMargin: this.rootMargin,
@@ -72,7 +73,6 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
       value: function _callback(entries) {
         var _this2 = this;
 
-        var entriesShown = 0;
         entries.forEach(function (entry, index) {
           // find our entry in our cache elements array
           var cachedEl = _this2.els.find(function (data) {
@@ -84,12 +84,29 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
             if (entry.intersectionRatio > cachedEl.triggerRatio) {
               // if we should always trigger it or if visibility hasn't been triggered yet
               if (cachedEl.alwaysTrigger || !cachedEl.inView) {
-                // apply staggering
+                // on before el visible callback
+                cachedEl.onBeforeElVisible && cachedEl.onBeforeElVisible(cachedEl);
+                _this2._onBeforeElVisibleCallback && _this2._onBeforeElVisibleCallback(cachedEl); // calculate staggering timeout
+
+                var staggerTimeout = cachedEl.stagger;
+
+                _this2._staggerEls.forEach(function (el) {
+                  if (el.inView) {
+                    staggerTimeout += el.stagger;
+                  }
+                });
+
+                _this2._staggerEls.push(cachedEl); // apply staggering timeout
+
+
                 setTimeout(function () {
                   cachedEl.onElVisible && cachedEl.onElVisible(cachedEl);
-                  _this2._onElVisibleCallback && _this2._onElVisibleCallback(cachedEl);
-                }, entriesShown * cachedEl.stagger);
-                entriesShown++;
+                  _this2._onElVisibleCallback && _this2._onElVisibleCallback(cachedEl); // remove from the staggering els array
+
+                  _this2._staggerEls = _this2._staggerEls.filter(function (el) {
+                    return cachedEl.id !== el.id;
+                  });
+                }, staggerTimeout);
               } // element is now in view
 
 
@@ -122,6 +139,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
        @triggerRatio (float between 0 and 1): the ratio at which the visible/hidden callback should be called, default to 0
        @alwaysTrigger (bool): whether it should trigger the visible callback multiple times or just once, default to true
        @stagger (int): number of milliseconds to wait before calling the visible callback (used for staggering animations), default to 0
+         @onBeforeElVisible (function): function to execute right before an element onElVisible callback is called, used it to change its stagger property for example
+       @onElVisible (function): function to execute when an element become visible
+       @onElHidden (function): function to execute when an element become hidden
        ***/
 
     }, {
@@ -138,6 +158,8 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
             alwaysTrigger = _ref2$alwaysTrigger === void 0 ? true : _ref2$alwaysTrigger,
             _ref2$stagger = _ref2.stagger,
             stagger = _ref2$stagger === void 0 ? 0 : _ref2$stagger,
+            _ref2$onBeforeElVisib = _ref2.onBeforeElVisible,
+            onBeforeElVisible = _ref2$onBeforeElVisib === void 0 ? function () {} : _ref2$onBeforeElVisib,
             _ref2$onElVisible = _ref2.onElVisible,
             onElVisible = _ref2$onElVisible === void 0 ? function () {} : _ref2$onElVisible,
             _ref2$onElHidden = _ref2.onElHidden,
@@ -153,6 +175,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
             alwaysTrigger: alwaysTrigger,
             ratio: 0,
             stagger: stagger,
+            onBeforeElVisible: onBeforeElVisible,
             onElVisible: onElVisible,
             onElHidden: onElHidden,
             inView: false,
@@ -245,6 +268,23 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
       value: function onError(callback) {
         if (callback) {
           this._onErrorCallback = callback;
+        }
+
+        return this;
+      }
+      /***
+       This is called when an element state switches from hidden to visible
+         params:
+       @callback (function): a function to execute
+         returns:
+       @this: our ScrollObserver element to handle chaining
+       ***/
+
+    }, {
+      key: "onBeforeElVisible",
+      value: function onBeforeElVisible(callback) {
+        if (callback) {
+          this._onBeforeElVisibleCallback = callback;
         }
 
         return this;

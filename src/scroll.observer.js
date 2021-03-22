@@ -2,7 +2,7 @@
  Lightweight vanilla javascript library to handle intersection observers
  Inspired from past work & and Baptiste Briel work: http://awams.bbriel.me/
  Author: Martin Laxenaire https://www.martin-laxenaire.fr/
- Version: 1.1.1
+ Version: 1.2.0
  ***/
 
 'use strict';
@@ -35,6 +35,7 @@ export class ScrollObserver {
 
             // cache elements to observe
             this.els = [];
+            this._staggerEls = [];
 
             this.observer = new IntersectionObserver(this._callback.bind(this), {
                 root: this.root === "viewport" ? null : this.root,
@@ -57,7 +58,6 @@ export class ScrollObserver {
      Can call callback functions based on element parameters
      ***/
     _callback(entries) {
-        let entriesShown = 0;
         entries.forEach((entry, index) => {
             // find our entry in our cache elements array
             const cachedEl = this.els.find(data => data.el.isSameNode(entry.target));
@@ -67,13 +67,29 @@ export class ScrollObserver {
                 if(entry.intersectionRatio > cachedEl.triggerRatio) {
                     // if we should always trigger it or if visibility hasn't been triggered yet
                     if(cachedEl.alwaysTrigger || !cachedEl.inView) {
-                        // apply staggering
+                        // on before el visible callback
+                        cachedEl.onBeforeElVisible && cachedEl.onBeforeElVisible(cachedEl);
+                        this._onBeforeElVisibleCallback && this._onBeforeElVisibleCallback(cachedEl);
+
+                        // calculate staggering timeout
+                        let staggerTimeout = cachedEl.stagger;
+                        this._staggerEls.forEach(el => {
+                            if(el.inView) {
+                                staggerTimeout += el.stagger;
+                            }
+                        });
+
+                        this._staggerEls.push(cachedEl);
+
+                        // apply staggering timeout
                         setTimeout(() => {
                             cachedEl.onElVisible && cachedEl.onElVisible(cachedEl);
                             this._onElVisibleCallback && this._onElVisibleCallback(cachedEl);
-                        }, entriesShown * cachedEl.stagger);
 
-                        entriesShown++;
+                            // remove from the staggering els array
+                            this._staggerEls = this._staggerEls.filter(el => cachedEl.id !== el.id);
+
+                        }, staggerTimeout);
                     }
 
                     // element is now in view
@@ -112,18 +128,24 @@ export class ScrollObserver {
      @triggerRatio (float between 0 and 1): the ratio at which the visible/hidden callback should be called, default to 0
      @alwaysTrigger (bool): whether it should trigger the visible callback multiple times or just once, default to true
      @stagger (int): number of milliseconds to wait before calling the visible callback (used for staggering animations), default to 0
+
+     @onBeforeElVisible (function): function to execute right before an element onElVisible callback is called, used it to change its stagger property for example
+     @onElVisible (function): function to execute when an element become visible
+     @onElHidden (function): function to execute when an element become hidden
      ***/
     observe({
-                elements = [],
-                selector,
-                keepObserving = false,
-                triggerRatio = 0,
-                alwaysTrigger = true,
+        elements = [],
+        selector,
+        keepObserving = false,
+        triggerRatio = 0,
+        alwaysTrigger = true,
 
-                stagger = 0,
-                onElVisible = () => {},
-                onElHidden = () => {},
-            }) {
+        stagger = 0,
+
+        onBeforeElVisible = () => {},
+        onElVisible = () => {},
+        onElHidden = () => {},
+    }) {
         const els = elements.length ? elements : document.querySelectorAll(selector);
 
         // add elements to our els array and start observing them
@@ -135,6 +157,7 @@ export class ScrollObserver {
                 alwaysTrigger: alwaysTrigger,
                 ratio: 0,
                 stagger: stagger,
+                onBeforeElVisible: onBeforeElVisible,
                 onElVisible: onElVisible,
                 onElHidden: onElHidden,
                 inView: false, // not in view on init
@@ -224,6 +247,24 @@ export class ScrollObserver {
     onError(callback) {
         if(callback) {
             this._onErrorCallback = callback;
+        }
+
+        return this;
+    }
+
+
+    /***
+     This is called when an element state switches from hidden to visible
+
+     params:
+     @callback (function): a function to execute
+
+     returns:
+     @this: our ScrollObserver element to handle chaining
+     ***/
+    onBeforeElVisible(callback) {
+        if(callback) {
+            this._onBeforeElVisibleCallback = callback;
         }
 
         return this;

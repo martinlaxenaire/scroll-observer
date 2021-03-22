@@ -65,13 +65,20 @@ scrollObserver.observe({
 });
 ```
 
-There are 2 callbacks that you can use when observing an element, `onElVisible()` and `onElHidden`, trigger by the intersection observer based on the `root`, `rootMargin` and `threshold` parameters:
+There are 3 callbacks that you can use when observing an element, `onBeforeElVisible()`, `onElVisible()` and `onElHidden`, trigger by the intersection observer based on the `root`, `rootMargin` and `threshold` parameters:
 
 ```javascript
 scrollObserver.observe({
     // elements to observe
     elements: document.querySelectorAll(".scroll-observed-el"),
+    // wait for 200ms (cumulative) each time one of this element is visible
+    stagger: 200,
     // an ".scroll-observed-el" element became visible
+    onBeforeElVisible: (observedEl) => {
+        // observedEl is an object containing the original HTML element, its bounding rectangle and other properties
+        console.log(observedEl);
+    },
+    // an ".scroll-observed-el" element became visible and its staggering timeout has run
     onElVisible: (observedEl) => {
         // observedEl is an object containing the original HTML element, its bounding rectangle and other properties
         console.log(observedEl);
@@ -96,7 +103,8 @@ Here is a complete list of all `observe()` method parameters:
 | triggerRatio | float between 0 and 1 | 0 | The ratio at which the visible/hidden callback should be called |
 | alwaysTrigger | bool | true | Whether it should trigger the visible callback multiple times or just once |
 | stagger | float | 0 | Number of milliseconds to wait before calling the visible callback (used for staggering animations) |
-| onElVisible | function(observedEl) | void | Function to execute when this element become visible |
+| onBeforeElVisible | function(observedEl) | void | Function to execute right when this element become visible. Use it to change this element staggering property for example |
+| onElVisible | function(observedEl) | void | Function to execute when this element become visible, after the staggering timeout |
 | onElHidden | function(observedEl) | void | Function to execute when this element become hidden |
 
 
@@ -131,13 +139,16 @@ scrollObserver.unobserveAll();
 
 <h3>Events</h3>
 
-There are 3 events you can use, `onError()`, `onElVisible()` and `onElHidden()`:
+There are 4 events you can use, `onError()`, `onBeforeElVisible()`, `onElVisible()` and `onElHidden()`:
 
 ```javascript
 scrollObserver.onError(() => {
     // intersection observer API is not supported, do something
-}).onElVisible((observedEl) => {
+}).onBeforeElVisible((observedEl) => {
     // called each time an observed element become visible
+    console.log(observedEl);
+}).onElVisible((observedEl) => {
+    // called each time an observed element become visible but after its staggering timeout
     console.log(observedEl);
 }).onElHidden((observedEl) => {
     // called each time an observed element become hidden
